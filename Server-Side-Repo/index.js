@@ -5,7 +5,7 @@ const cookieParser = require('cookie-parser');
 require('dotenv').config()
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const app = express()
-const PORT = process.env.PORT || 5000
+const port = process.env.PORT || 5000
 app.use(express.json())
 app.use(cors({
   origin:['http://localhost:5173']
@@ -28,6 +28,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+    await client.connect()
       const partnersCollections = client.db('Learn-Mentor-GateDB').collection('partners')
       
       app.get('/partners',async(req,res)=>{
@@ -48,6 +49,6 @@ app.get('/',(req,res)=>{
    res.send('Learn Monitor Gate Server is Running')
 })
 
-app.listen(PORT ,()=>{
-  console.log('running on',PORT);
+app.listen(port ,()=>{
+  console.log('running on',port);
 })
