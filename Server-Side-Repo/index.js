@@ -39,7 +39,7 @@ async function run() {
 
       // get courses 
       app.get('/courses',async(req,res)=>{
-        const result = await coursesCollections.find().toArray()
+        const result = await coursesCollections.find().sort({Total_enrollment:-1}).toArray()
         res.send(result)
       })
 
