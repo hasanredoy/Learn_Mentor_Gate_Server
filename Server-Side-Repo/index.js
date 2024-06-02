@@ -10,7 +10,7 @@ app.use(express.json())
 app.use(cors({
   origin:['http://localhost:5173']
 }))
-app.use(cookieParser)
+app.use(cookieParser())
 
 
 
@@ -28,11 +28,18 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect()
+    // await client.connect()
       const partnersCollections = client.db('Learn-Mentor-GateDB').collection('partners')
-      
+      const coursesCollections = client.db('Learn-Mentor-GateDB').collection('courses')
+      // get partners 
       app.get('/partners',async(req,res)=>{
         const result = await partnersCollections.find().toArray()
+        res.send(result)
+      })
+
+      // get courses 
+      app.get('/courses',async(req,res)=>{
+        const result = await coursesCollections.find().toArray()
         res.send(result)
       })
 
