@@ -35,6 +35,8 @@ async function run() {
       const reviewsCollections = client.db('Learn-Mentor-GateDB').collection('reviews')
       const usersCollections = client.db('Learn-Mentor-GateDB').collection('users')
      
+      const teachersCollections = client.db('Learn-Mentor-GateDB').collection('teachers')
+     
       // jwt related api 
       app.post('/jwt',async(req,res)=>{
         const user = req.body
@@ -73,7 +75,7 @@ async function run() {
       // users apis 
       app.post('/users',async(req,res)=>{
         const data = req.body
-        console.log(data);
+        // console.log(data);
         const filter ={email: data?.email}
         const usersData = await usersCollections.find(filter).toArray()
         if(usersData){
@@ -83,6 +85,26 @@ async function run() {
           res.send(result)
         }
       })
+
+
+      // post on teacher collection
+      app.post('/teachers',async(req,res)=>{
+        const data = req.body
+        console.log(data);
+        // const filter ={email: data?.email}
+        // const teachersData = await teachersCollections.find(filter).toArray()
+        // if(teachersData){
+        //   return res.send({message:' already exist',insertedId:null})
+        // }
+        // else{
+          const result  = await teachersCollections.insertOne(data)
+          res.send(result)
+        // }
+      })
+
+      // teachers api 
+     
+
 
     // await client.db("admin").command({ ping: 1 });
     // console.log("Pinged your deployment. You successfully connected to MongoDB!");
