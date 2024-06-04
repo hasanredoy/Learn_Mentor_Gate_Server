@@ -3,7 +3,7 @@ const cors = require('cors');
 const jsonWebToken = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
 const port = process.env.PORT || 5000
 app.use(express.json())
@@ -57,6 +57,16 @@ async function run() {
       // get courses 
       app.get('/courses',async(req,res)=>{
         const result = await coursesCollections.find().sort({Total_enrollment:-1}).toArray()
+        res.send(result)
+      })
+      // get single courses 
+      app.get('/course/:id',async(req,res)=>{
+        const id =req.params.id
+        // console.log(req.originalUrl);
+        const filter = {_id: new ObjectId(id)}
+        console.log(filter);
+        const result = await coursesCollections.findOne(filter)
+        console.log(id,result);
         res.send(result)
       })
 
