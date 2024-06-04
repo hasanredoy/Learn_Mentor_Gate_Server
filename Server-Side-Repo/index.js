@@ -29,11 +29,22 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // await client.connect()
+    // all collections
       const partnersCollections = client.db('Learn-Mentor-GateDB').collection('partners')
       const coursesCollections = client.db('Learn-Mentor-GateDB').collection('courses')
+      const reviewsCollections = client.db('Learn-Mentor-GateDB').collection('reviews')
+      const usersCollections = client.db('Learn-Mentor-GateDB').collection('users')
+
+
+
       // get partners 
       app.get('/partners',async(req,res)=>{
         const result = await partnersCollections.find().toArray()
+        res.send(result)
+      })
+      // get reviews 
+      app.get('/reviews',async(req,res)=>{
+        const result = await reviewsCollections.find().toArray()
         res.send(result)
       })
 
@@ -43,8 +54,22 @@ async function run() {
         res.send(result)
       })
 
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+      // users apis 
+      app.post('/users',async(req,res)=>{
+        const data = req.body
+        console.log(data);
+        const filter ={email: data?.email}
+        const usersData = await usersCollections.find(filter).toArray()
+        if(usersData){
+          return res.send({message:'user already exist',insertedId:null})
+        }else{
+          const result  = await usersCollections.insertOne(data)
+          res.send(result)
+        }
+      })
+
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     
   }
