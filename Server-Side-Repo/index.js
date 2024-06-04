@@ -34,7 +34,13 @@ async function run() {
       const coursesCollections = client.db('Learn-Mentor-GateDB').collection('courses')
       const reviewsCollections = client.db('Learn-Mentor-GateDB').collection('reviews')
       const usersCollections = client.db('Learn-Mentor-GateDB').collection('users')
-
+     
+      // jwt related api 
+      app.post('/jwt',async(req,res)=>{
+        const user = req.body
+        const token = jsonWebToken.sign(user,process.env.Access_Token,{expiresIn:'3h'})
+        res.send(token)
+      })
 
 
       // get partners 
