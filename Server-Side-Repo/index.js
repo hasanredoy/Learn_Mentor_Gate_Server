@@ -86,20 +86,28 @@ async function run() {
         }
       })
 
+      // get teacher status 
+      app.get('/teacher-status',async(req,res)=>{
+        const email = req?.query?.email
+        console.log(email);
+        const filter={email : email}
+        const teacherData = await teachersCollections.findOne(filter)
+        res.send({status:teacherData?.status})
 
+      })
       // post on teacher collection
       app.post('/teachers',async(req,res)=>{
         const data = req.body
         console.log(data);
-        // const filter ={email: data?.email}
-        // const teachersData = await teachersCollections.find(filter).toArray()
-        // if(teachersData){
-        //   return res.send({message:' already exist',insertedId:null})
-        // }
-        // else{
+        const filter ={email: data?.email}
+        const teachersData = await teachersCollections.find(filter).toArray()
+        if(teachersData){
+          return res.send({message:' already exist',insertedId:null})
+        }
+        else{
           const result  = await teachersCollections.insertOne(data)
           res.send(result)
-        // }
+        }
       })
 
       // teachers api 
