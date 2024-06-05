@@ -73,6 +73,13 @@ async function run() {
       })
 
       // users apis 
+      // get users 
+app.get('/users',async(req,res)=>{
+  const result = await usersCollections.find().toArray()
+  res.send(result)
+})
+
+      // post on users collection 
       app.post('/users',async(req,res)=>{
         const data = req.body
         // console.log(data);
