@@ -107,7 +107,7 @@ app.get('/user/role',async(req,res)=>{
           res.send(result)
         }
       })
-    //  update user role 
+    //  update user role to admin 
     app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
 
@@ -121,12 +121,60 @@ app.get('/user/role',async(req,res)=>{
       const result = await usersCollections.updateOne(filter, update);
       res.send(result);
     });
+    //  update user role to teacher 
+    app.patch("/user/teacher/:id", async (req, res) => {
+      const id = req.params.id;
+      const queryEmail = req.query?.email
+      const query ={email: queryEmail}
+      const filter = { _id: new ObjectId(id) };
+      const update = {
+        $set: {
+          role: "teacher",
+        },
+      };
+        console.log('queryId>',queryEmail);
+        // console.log('Id>',id);
+      
+      const updateDoc = {
+        $set:{
+          status:'approved'
+        }
+      }
+      const teacherCollectionResult = await teachersCollections.updateOne(filter,updateDoc)
+      const result = await usersCollections.updateOne(query, update);
+      res.send({result,teacherCollectionResult});
+    });
+
+    // delete user and send status rejected 
+    app.patch('/teacher/:id',async(req,res)=>{
+      const id = req.params.id
+      const filter= {_id: new ObjectId(id)}
+      const updateDoc = {
+        $set:{
+          status:'rejected'
+        }
+      }
+      const result = await teachersCollections.updateOne(filter,updateDoc)
+      res.send(result)
+    })
     
     
     // get teacher collection
     app.get('/teachers',async(req,res)=>{
        const result  = await teachersCollections.find().toArray()
         res.send(result)
+    })
+    // update teacher status 
+    app.patch('/teacher/approve/:id',async(req,res)=>{
+      const id = req.params.id
+      const filter ={_id: new ObjectId(id)}
+      const updateDoc = {
+        $set:{
+          status:'approved'
+        }
+      }
+      const result = await teachersCollections.updateOne(filter,updateDoc)
+      res.send(result)
     })
       // get teacher status 
       app.get('/teacher-status',async(req,res)=>{
