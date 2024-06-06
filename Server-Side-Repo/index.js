@@ -84,7 +84,7 @@ app.get('/users',async(req,res)=>{
         const data = req.body
         // console.log(data);
         const filter ={email: data?.email}
-        const usersData = await usersCollections.find(filter).toArray()
+        const usersData = await usersCollections.findOne(filter)
         if(usersData){
           return res.send({message:'user already exist',insertedId:null})
         }else{
@@ -92,6 +92,21 @@ app.get('/users',async(req,res)=>{
           res.send(result)
         }
       })
+    //  update user role 
+    app.patch("/users/admin/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const filter = { _id: new ObjectId(id) };
+      const update = {
+        $set: {
+          role: "admin",
+        },
+      };
+
+      const result = await usersCollections.updateOne(filter, update);
+      res.send(result);
+    });
+
 
       // get teacher status 
       app.get('/teacher-status',async(req,res)=>{
@@ -107,7 +122,7 @@ app.get('/users',async(req,res)=>{
         const data = req.body
         console.log(data);
         const filter ={email: data?.email}
-        const teachersData = await teachersCollections.find(filter).toArray()
+        const teachersData = await teachersCollections.findOne(filter)
         if(teachersData){
           return res.send({message:' already exist',insertedId:null})
         }
