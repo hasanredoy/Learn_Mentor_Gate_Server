@@ -78,6 +78,21 @@ app.get('/users',async(req,res)=>{
   const result = await usersCollections.find().toArray()
   res.send(result)
 })
+// get single user 
+app.get('/user',async(req,res)=>{
+  const email = req.query.email
+  const filter = {email:email}
+  const result = await usersCollections.findOne(filter)
+  res.send(result)
+})
+// get user role
+app.get('/user/role',async(req,res)=>{
+  const email = req.query.email
+  const filter = {email:email}
+  const result = await usersCollections.findOne(filter)
+  const role = result?.role
+  res.send({role})
+})
 
       // post on users collection 
       app.post('/users',async(req,res)=>{
@@ -106,8 +121,13 @@ app.get('/users',async(req,res)=>{
       const result = await usersCollections.updateOne(filter, update);
       res.send(result);
     });
-
-
+    
+    
+    // get teacher collection
+    app.get('/teachers',async(req,res)=>{
+       const result  = await teachersCollections.find().toArray()
+        res.send(result)
+    })
       // get teacher status 
       app.get('/teacher-status',async(req,res)=>{
         const email = req?.query?.email
