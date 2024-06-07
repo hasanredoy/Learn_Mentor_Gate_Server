@@ -56,9 +56,16 @@ async function run() {
         res.send(result)
       })
 
-      // get courses 
+      // get courses for display in home screen and all classes page 
       app.get('/courses',async(req,res)=>{
-        const result = await coursesCollections.find().sort({Total_enrollment:-1}).toArray()
+        
+        const result = await coursesCollections.find({status:'approved'}).sort({Total_enrollment:-1}).toArray()
+        res.send(result)
+      })
+    // get all courses for admin 
+      app.get('/allCourses',async(req,res)=>{
+        
+        const result = await coursesCollections.find().toArray()
         res.send(result)
       })
       // get single courses 
@@ -71,6 +78,20 @@ async function run() {
         console.log(id,result);
         res.send(result)
       })
+
+       // post on course collection  
+ app.post('/courses',async(req,res)=>{
+  const data = req.body
+  // console.log(data);
+  const filter ={Title: data?.Title}
+  const courseData = await coursesCollections.findOne(filter)
+  if(courseData){
+    return res.send({message:'course already exist',insertedId:null})
+  }else{
+    const result  = await coursesCollections.insertOne(data)
+    res.send(result)
+  }
+})
 
       // users apis 
       // get users 
@@ -93,6 +114,7 @@ app.get('/user/role',async(req,res)=>{
   const role = result?.role
   res.send({role})
 })
+
 
       // post on users collection 
       app.post('/users',async(req,res)=>{
@@ -188,16 +210,10 @@ app.get('/user/role',async(req,res)=>{
       // post on teacher collection
       app.post('/teachers',async(req,res)=>{
         const data = req.body
-        console.log(data);
-        const filter ={email: data?.email}
-        const teachersData = await teachersCollections.findOne(filter)
-        if(teachersData){
-          return res.send({message:' already exist',insertedId:null})
-        }
-        else{
+        
           const result  = await teachersCollections.insertOne(data)
           res.send(result)
-        }
+        
       })
 
       // teachers api 
