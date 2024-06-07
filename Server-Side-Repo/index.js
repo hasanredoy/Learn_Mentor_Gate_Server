@@ -45,6 +45,9 @@ async function run() {
     const teachersCollections = client
       .db("Learn-Mentor-GateDB")
       .collection("teachers");
+    const assignmentCollections = client
+      .db("Learn-Mentor-GateDB")
+      .collection("assignments");
 
     // jwt related api
     app.post("/jwt", async (req, res) => {
@@ -150,18 +153,20 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
-          Title: updateData.Title,
-          Instructor: updateData.Instructor,
-          Short_description: updateData.Short_description,
-          Long_description: updateData.Long_description,
-          Duration: updateData.Duration,
-          Enrollment: updateData.Enrollment,
-          Price: updateData.Price,
-          Posted_on: updateData.Posted_on,
-          Instructor_Image: updateData.Instructor_Image,
-          Course_Image: updateData.Course_Image,
-          email: updateData.email,
-          status: updateData.status,
+          Title: updateData?.Title,
+          Instructor: updateData?.Instructor,
+          Short_description: updateData?.Short_description,
+          Long_description: updateData?.Long_description,
+          Duration: updateData?.Duration,
+          Enrollment: updateData?.Enrollment,
+          Price: updateData?.Price,
+          Posted_on: updateData?.Posted_on,
+          Instructor_Image: updateData?.Instructor_Image,
+          Course_Image: updateData?.Course_Image,
+          email: updateData?.email,
+          status: updateData?.status,
+          perDayAssignment:updateData?.perDayAssignment,
+          assignments:updateData?.assignments,
         },
       };
       const options = {upsert:true}
@@ -291,7 +296,26 @@ async function run() {
       res.send(result);
     });
 
-    // teachers api
+    // assignment apis
+  // get assignment collection
+  app.get("/assignments", async (req, res) => {
+    const result = await assignmentCollections.find().toArray();
+    res.send(result);
+  });
+
+   // post on assignment collection
+   app.post("/assignments", async (req, res) => {
+    const data = req.body;
+    // console.log(data);
+    const filter = { email: data?.email };
+    const usersData = await assignmentCollections.findOne(filter);
+    if (usersData) {
+      return res.send({ message: "user already exist", insertedId: null });
+    } else {
+      const result = await assignmentCollections.insertOne(data);
+      res.send(result);
+    }
+  });
 
     // await client.db("admin").command({ ping: 1 });
     // console.log("Pinged your deployment. You successfully connected to MongoDB!");
