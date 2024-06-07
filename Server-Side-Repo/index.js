@@ -68,6 +68,13 @@ async function run() {
         const result = await coursesCollections.find().toArray()
         res.send(result)
       })
+    // get all courses for teacher  
+      app.get('/myAddedClasses',async(req,res)=>{
+        const email = req?.query?.email
+        const filter={email:email}
+        const result = await coursesCollections.find(filter).toArray()
+        res.send(result)
+      })
       // get single courses 
       app.get('/course/:id',async(req,res)=>{
         const id =req.params.id
@@ -83,6 +90,7 @@ async function run() {
  app.post('/courses',async(req,res)=>{
   const data = req.body
   // console.log(data);
+  // checking the class already exist 
   const filter ={Title: data?.Title}
   const courseData = await coursesCollections.findOne(filter)
   if(courseData){
@@ -91,6 +99,30 @@ async function run() {
     const result  = await coursesCollections.insertOne(data)
     res.send(result)
   }
+})
+// update course status 
+app.patch('/approve-course/:id',async(req,res)=>{
+  const id = req.params?.id
+  const filter ={_id: new ObjectId(id)}
+  const updateDoc ={
+    $set:{
+      status:'approved'
+    }
+  }
+  const result= await coursesCollections.updateOne(filter,updateDoc)
+  res.send(result)
+})
+// update course status 
+app.patch('/reject-course/:id',async(req,res)=>{
+  const id = req.params?.id
+  const filter ={_id: new ObjectId(id)}
+  const updateDoc ={
+    $set:{
+      status:'rejected'
+    }
+  }
+  const result= await coursesCollections.updateOne(filter,updateDoc)
+  res.send(result)
 })
 
       // users apis 
