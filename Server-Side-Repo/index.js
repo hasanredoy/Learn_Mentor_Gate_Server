@@ -64,6 +64,36 @@ async function run() {
       });
       res.send(token);
     });
+ // verify admin 
+const verifyAdmin =async (req,res,next)=>{
+  const email = req?.decoded.email
+  const query = { email: email}
+  console.log('decoded email===>',email);
+  const user = await usersCollections.findOne(query)
+  const isAdmin = user?.role === 'admin'
+  if(!isAdmin){
+   return res.status(403).send({message:'forbidden access'})
+  }
+ next()
+}
+    const verify = (req,res,next)=>{
+  
+      console.log('header-->',req.headers.authorization);
+      if(!req.headers.authorization){
+        return res.status(401).send({message:'unauthorized'})
+      }
+      const token = req?.headers?.authorization.split(' ')[1]
+      console.log( "token is", token);
+      jsonWebToken.verify(token, process.env.Access_Token,(err, decoded)=>{
+        if(err){
+          return res.status(401)
+        }
+        req.decoded=decoded;
+        next()
+      })
+    }
+
+   
 
     // get partners
     app.get("/partners", async (req, res) => {
@@ -73,6 +103,20 @@ async function run() {
     // get reviews
     app.get("/reviews", async (req, res) => {
       const result = await reviewsCollections.find().toArray();
+      res.send(result);
+    });
+    // get reviews by id
+    app.get("/reviews/:id",verify,verifyAdmin, async (req, res) => {
+      const id = req.params.id
+      console.log('review id' ,id);
+      const filter = {reviewId:id}
+      const result = await reviewsCollections.find(filter).toArray();
+      res.send(result);
+    });
+    // get reviews
+    app.post("/reviews", async (req, res) => {
+      const data = req.body
+      const result = await reviewsCollections.insertOne(data)
       res.send(result);
     });
 
@@ -85,12 +129,12 @@ async function run() {
       res.send(result);
     });
     // get all courses for admin
-    app.get("/allCourses", async (req, res) => {
+    app.get("/allCourses",verify,verifyAdmin, async (req, res) => {
       const result = await coursesCollections.find().toArray();
       res.send(result);
     });
     // get all courses for teacher
-    app.get("/teacher-classes", async (req, res) => {
+    app.get("/teacher-classes",verify, async (req, res) => {
       const email = req?.query?.email;
       console.log("email", email);
       const filter = { email: email };
@@ -98,7 +142,7 @@ async function run() {
       res.send(result);
     });
     // get single courses
-    app.get("/course/:id", async (req, res) => {
+    app.get("/course/:id",verify, async (req, res) => {
       const id = req.params.id;
       // console.log(req.originalUrl);
       const filter = { _id: new ObjectId(id) };
@@ -123,7 +167,7 @@ async function run() {
       }
     });
     // delete class 
-    app.delete("/delete-course/:id", async (req, res) => {
+    app.delete("/delete-course/:id",verify, async (req, res) => {
       const id = req.params?.id;
       const filter = { _id: new ObjectId(id) };
       const result = await coursesCollections.deleteOne(filter);
@@ -183,7 +227,7 @@ async function run() {
 
     // users apis
     // get users
-    app.get("/users", async (req, res) => {
+    app.get("/users",verify,verifyAdmin, async (req, res) => {
       const result = await usersCollections.find().toArray();
       res.send(result);
     });
@@ -271,7 +315,7 @@ async function run() {
     });
 
     // get teacher collection
-    app.get("/teachers", async (req, res) => {
+    app.get("/teachers",verify,verifyAdmin, async (req, res) => {
       const result = await teachersCollections.find().toArray();
       res.send(result);
     });
@@ -305,7 +349,7 @@ async function run() {
 
     // assignment apis
   // get assignment collection
-  app.get("/assignments", async (req, res) => {
+  app.get("/assignments",verify, async (req, res) => {
     const id=req.query?.id
     let query={}
     if(id){
@@ -369,7 +413,7 @@ app.post(`/create-payment-intent`,async (req,res)=>{
 })
 
 //  paid courses collections 
-   app.get('/paid-course',async(req,res)=>{
+   app.get('/paid-course',verify,async(req,res)=>{
     const email = req.query?.email
     let query={}
     if(email){
