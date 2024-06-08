@@ -328,6 +328,27 @@ async function run() {
       res.send(result);
     }
   });
+  // update assignment 
+   app.patch("/assignments/:id", async (req, res) => {
+       const id = req.params.id
+       const queryId=req.query.id
+       const query = {_id:new ObjectId(queryId)}
+       const filter = {_id: new ObjectId(id)}
+       const updateDoc={
+        $set:{
+          status:'submitted'
+        }
+       }
+       const updateDocQuery={
+        $inc:{
+          perDayAssignment:1
+        }
+       }
+       const assignmentResult = await coursesCollections.updateOne(query,updateDocQuery)
+      const result = await assignmentCollections.updateOne(filter,updateDoc);
+      res.send({result,assignmentResult});
+    
+  });
 // payments intent 
 app.post(`/create-payment-intent`,async (req,res)=>{
   const {price}=req.body
@@ -349,21 +370,29 @@ app.post(`/create-payment-intent`,async (req,res)=>{
 
 //  paid courses collections 
    app.get('/paid-course',async(req,res)=>{
-    const result =await paidCoursesCollections.find().toArray()
+    const email = req.query?.email
+    let query={}
+    if(email){
+      query={email: email}
+    }
+    const result =await paidCoursesCollections.find(query).toArray()
     res.send(result)
    })
     // post on corse collection
    app.post("/paid-course", async (req, res) => {
     const data = req.body;
-    console.log(data);
-    const filter = { courseId : data?.courseId};
-    const usersData = await paidCoursesCollections.findOne(filter);
-    if (usersData) {
-      return res.send({ message: "assignment already exist", insertedId: null });
-    } else {
+    const queryId=req.query.id
+    const query = {_id:new ObjectId(queryId)}
+
+    const updateDocQuery={
+      $inc:{
+        Enrollment:1
+      }
+     }
+     const assignmentResult = await coursesCollections.updateOne(query,updateDocQuery)
       const result = await paidCoursesCollections.insertOne(data);
-      res.send(result);
-    }
+      res.send({result,assignmentResult});
+    
   });
 
     // await client.db("admin").command({ ping: 1 });
