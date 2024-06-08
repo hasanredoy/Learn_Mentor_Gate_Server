@@ -3,6 +3,10 @@ const cors = require("cors");
 const jsonWebToken = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+
+
+
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
@@ -48,6 +52,9 @@ async function run() {
     const assignmentCollections = client
       .db("Learn-Mentor-GateDB")
       .collection("assignments");
+    const paidCoursesCollections = client
+      .db("Learn-Mentor-GateDB")
+      .collection("paidCourses");
 
     // jwt related api
     app.post("/jwt", async (req, res) => {
@@ -97,7 +104,7 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       // console.log(filter);
       const result = await coursesCollections.findOne(filter);
-      // console.log(id,result);
+      console.log(id);
       res.send(result);
     });
 
@@ -299,7 +306,12 @@ async function run() {
     // assignment apis
   // get assignment collection
   app.get("/assignments", async (req, res) => {
-    const result = await assignmentCollections.find().toArray();
+    const id=req.query?.id
+    let query={}
+    if(id){
+      query={ assignmentId:id}
+    }
+    const result = await assignmentCollections.find(query).toArray();
     res.send(result);
   });
 
@@ -307,12 +319,49 @@ async function run() {
    app.post("/assignments", async (req, res) => {
     const data = req.body;
     // console.log(data);
-    const filter = { email: data?.email };
+    const filter = { Assignment_Title : data?.Assignment_Title };
     const usersData = await assignmentCollections.findOne(filter);
     if (usersData) {
-      return res.send({ message: "user already exist", insertedId: null });
+      return res.send({ message: "assignment already exist", insertedId: null });
     } else {
       const result = await assignmentCollections.insertOne(data);
+      res.send(result);
+    }
+  });
+// payments intent 
+app.post(`/create-payment-intent`,async (req,res)=>{
+  const {price}=req.body
+  const amount = parseInt(price*100) 
+  
+  console.log('amount==>',amount);
+  const paymentIntent =await stripe.paymentIntents.create({
+    amount:amount,
+    currency:'usd',
+    payment_method_types: [
+      "card"
+    ],
+
+  })
+  res.send({
+    clientSecret: paymentIntent.client_secret
+  })
+})
+
+//  paid courses collections 
+   app.get('/paid-course',async(req,res)=>{
+    const result =await paidCoursesCollections.find().toArray()
+    res.send(result)
+   })
+    // post on corse collection
+   app.post("/paid-course", async (req, res) => {
+    const data = req.body;
+    console.log(data);
+    const filter = { courseId : data?.courseId};
+    const usersData = await paidCoursesCollections.findOne(filter);
+    if (usersData) {
+      return res.send({ message: "assignment already exist", insertedId: null });
+    } else {
+      const result = await paidCoursesCollections.insertOne(data);
       res.send(result);
     }
   });
