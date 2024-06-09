@@ -3,9 +3,7 @@ const cors = require("cors");
 const jsonWebToken = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
-
-
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
@@ -64,36 +62,33 @@ async function run() {
       });
       res.send(token);
     });
- // verify admin 
-const verifyAdmin =async (req,res,next)=>{
-  const email = req?.decoded.email
-  const query = { email: email}
-  // console.log('decoded email===>',email);
-  const user = await usersCollections.findOne(query)
-  const isAdmin = user?.role === 'admin'
-  if(!isAdmin){
-   return res.status(403).send({message:'forbidden access'})
-  }
- next()
-}
-    const verify = (req,res,next)=>{
-  
-      // console.log('header-->',req.headers.authorization);
-      if(!req.headers.authorization){
-        return res.status(401).send({message:'unauthorized'})
+    // verify admin
+    const verifyAdmin = async (req, res, next) => {
+      const email = req?.decoded.email;
+      const query = { email: email };
+      // console.log('decoded email===>',email);
+      const user = await usersCollections.findOne(query);
+      const isAdmin = user?.role === "admin";
+      if (!isAdmin) {
+        return res.status(403).send({ message: "forbidden access" });
       }
-      const token = req?.headers?.authorization.split(' ')[1]
+      next();
+    };
+    const verify = (req, res, next) => {
+      // console.log('header-->',req.headers.authorization);
+      if (!req.headers.authorization) {
+        return res.status(401).send({ message: "unauthorized" });
+      }
+      const token = req?.headers?.authorization.split(" ")[1];
       // console.log( "token is", token);
-      jsonWebToken.verify(token, process.env.Access_Token,(err, decoded)=>{
-        if(err){
-          return res.status(401)
+      jsonWebToken.verify(token, process.env.Access_Token, (err, decoded) => {
+        if (err) {
+          return res.status(401);
         }
-        req.decoded=decoded;
-        next()
-      })
-    }
-
-   
+        req.decoded = decoded;
+        next();
+      });
+    };
 
     // get partners
     app.get("/partners", async (req, res) => {
@@ -106,28 +101,29 @@ const verifyAdmin =async (req,res,next)=>{
       res.send(result);
     });
     // get reviews by id
-    app.get("/reviews/:id",verify,verifyAdmin, async (req, res) => {
-      const id = req.params.id
+    app.get("/reviews/:id", verify, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
       // console.log('review id' ,id);
-      const filter = {reviewId:id}
+      const filter = { reviewId: id };
       const result = await reviewsCollections.find(filter).toArray();
       res.send(result);
     });
     // get reviews
     app.post("/reviews", async (req, res) => {
-      const data = req.body
-      const result = await reviewsCollections.insertOne(data)
+      const data = req.body;
+      const result = await reviewsCollections.insertOne(data);
       res.send(result);
     });
 
     // get courses for display in home screen and all classes page
     app.get("/courses", async (req, res) => {
-      const page = parseInt(req.query.page)
-      const size = parseInt(req.query.size)
+      const page = parseInt(req.query.page);
+      const size = parseInt(req.query.size);
 
       const result = await coursesCollections
         .find({ status: "approved" })
-        .skip(size*page).limit(size)
+        .skip(size * page)
+        .limit(size)
         .sort({ Total_enrollment: -1 })
         .toArray();
       res.send(result);
@@ -142,20 +138,34 @@ const verifyAdmin =async (req,res,next)=>{
       res.send(result);
     });
     // get all courses for admin
-    app.get("/allCourses",verify,verifyAdmin, async (req, res) => {
-      const page = parseInt(req.query.page)
-      const size = parseInt(req.query.size)
-      console.log({size,page});
-      const result = await coursesCollections.find().skip(size*page).limit(size).toArray();
+    app.get("/allCourses", verify, verifyAdmin, async (req, res) => {
+      const page = parseInt(req.query.page);
+      const size = parseInt(req.query.size);
+      console.log({ size, page });
+      const result = await coursesCollections
+        .find()
+        .skip(size * page)
+        .limit(size)
+        .toArray();
       res.send(result);
     });
     // get all courses length
     app.get("/allCourses-length", async (req, res) => {
-      const result = await coursesCollections.estimatedDocumentCount()
-      res.send({count:result});
+      const result = await coursesCollections.estimatedDocumentCount();
+      res.send({ count: result });
     });
     // get all courses for teacher
-    app.get("/teacher-classes",verify, async (req, res) => {
+    app.get("/teacher-classes", verify, async (req, res) => {
+      const email = req?.query?.email;
+      // console.log("email", email);
+      const filter = { email: email };
+      const page = parseInt(req.query.page)
+      const size = parseInt(req.query.size)
+      const result = await coursesCollections.find(filter).skip(size*page).limit(size).toArray();
+      res.send(result);
+    });
+    // get all courses for teacher length only
+    app.get("/teacher-classes-length", verify, async (req, res) => {
       const email = req?.query?.email;
       // console.log("email", email);
       const filter = { email: email };
@@ -163,7 +173,7 @@ const verifyAdmin =async (req,res,next)=>{
       res.send(result);
     });
     // get single courses
-    app.get("/course/:id",verify, async (req, res) => {
+    app.get("/course/:id", verify, async (req, res) => {
       const id = req.params.id;
       // console.log(req.originalUrl);
       const filter = { _id: new ObjectId(id) };
@@ -187,8 +197,8 @@ const verifyAdmin =async (req,res,next)=>{
         res.send(result);
       }
     });
-    // delete class 
-    app.delete("/delete-course/:id",verify, async (req, res) => {
+    // delete class
+    app.delete("/delete-course/:id", verify, async (req, res) => {
       const id = req.params?.id;
       const filter = { _id: new ObjectId(id) };
       const result = await coursesCollections.deleteOne(filter);
@@ -237,27 +247,35 @@ const verifyAdmin =async (req,res,next)=>{
           Course_Image: updateData?.Course_Image,
           email: updateData?.email,
           status: updateData?.status,
-          perDayAssignment:updateData?.perDayAssignment,
-          assignments:updateData?.assignments,
+          perDayAssignment: updateData?.perDayAssignment,
+          assignments: updateData?.assignments,
         },
       };
-      const options = {upsert:true}
-      const result = await coursesCollections.updateOne(filter, updateDoc,options);
+      const options = { upsert: true };
+      const result = await coursesCollections.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
       res.send(result);
     });
 
     // users apis
     // get users
-    app.get("/users",verify,verifyAdmin, async (req, res) => {
-      const page = parseInt(req.query.page)
-      const size = parseInt(req.query.size)
-      const result = await usersCollections.find().skip(size*page).limit(size).toArray();
+    app.get("/users", verify, verifyAdmin, async (req, res) => {
+      const page = parseInt(req.query.page);
+      const size = parseInt(req.query.size);
+      const result = await usersCollections
+        .find()
+        .skip(size * page)
+        .limit(size)
+        .toArray();
       res.send(result);
     });
     // get users length
     app.get("/users-length", async (req, res) => {
-      const result = await usersCollections.estimatedDocumentCount()
-      res.send({result});
+      const result = await usersCollections.estimatedDocumentCount();
+      res.send({ result });
     });
     // get single user
     app.get("/user", async (req, res) => {
@@ -343,16 +361,20 @@ const verifyAdmin =async (req,res,next)=>{
     });
 
     // get teacher collection
-    app.get("/teachers",verify,verifyAdmin, async (req, res) => {
-      const page = parseInt(req.query.page)
-      const size = parseInt(req.query.size)
-      const result = await teachersCollections.find().skip(size*page).limit(size).toArray();
+    app.get("/teachers", verify, verifyAdmin, async (req, res) => {
+      const page = parseInt(req.query.page);
+      const size = parseInt(req.query.size);
+      const result = await teachersCollections
+        .find()
+        .skip(size * page)
+        .limit(size)
+        .toArray();
       res.send(result);
     });
     // get teacher collection
     app.get("/teachers-length", async (req, res) => {
       const result = await teachersCollections.estimatedDocumentCount();
-      res.send({result});
+      res.send({ result });
     });
     // update teacher status
     app.patch("/teacher/approve/:id", async (req, res) => {
@@ -383,109 +405,133 @@ const verifyAdmin =async (req,res,next)=>{
     });
 
     // assignment apis
-  // get assignment collection
-  app.get("/assignments",verify, async (req, res) => {
-    const id=req.query?.id
-    let query={}
-    if(id){
-      query={ assignmentId:id}
-    }
-    const result = await assignmentCollections.find(query).toArray();
-    res.send(result);
-  });
-
-   // post on assignment collection
-   app.post("/assignments", async (req, res) => {
-    const data = req.body;
-    // console.log(data);
-    const filter = { Assignment_Title : data?.Assignment_Title };
-    const usersData = await assignmentCollections.findOne(filter);
-    if (usersData) {
-      return res.send({ message: "assignment already exist", insertedId: null });
-    } else {
-      const result = await assignmentCollections.insertOne(data);
-      res.send(result);
-    }
-  });
-  // update assignment 
-   app.patch("/assignments/:id", async (req, res) => {
-       const id = req.params.id
-       const queryId=req.query.id
-       const query = {_id:new ObjectId(queryId)}
-       const filter = {_id: new ObjectId(id)}
-       const updateDoc={
-        $set:{
-          status:'submitted'
-        }
-       }
-       const updateDocQuery={
-        $inc:{
-          perDayAssignment:1
-        }
-       }
-       const assignmentResult = await coursesCollections.updateOne(query,updateDocQuery)
-      const result = await assignmentCollections.updateOne(filter,updateDoc);
-      res.send({result,assignmentResult});
-    
-  });
-// payments intent 
-app.post(`/create-payment-intent`,async (req,res)=>{
-  const {price}=req.body
-  const amount = parseInt(price*100) 
-  
-  console.log('amount==>',amount);
-  const paymentIntent =await stripe.paymentIntents.create({
-    amount:amount,
-    currency:'usd',
-    payment_method_types: [
-      "card"
-    ],
-
-  })
-  res.send({
-    clientSecret: paymentIntent.client_secret
-  })
-})
-
-//  paid courses collections 
-   app.get('/paid-course',verify,async(req,res)=>{
-    const email = req.query?.email
-    let query={}
-    if(email){
-      query={email: email}
-    }
-    const page = parseInt(req.query.page)
-      const size = parseInt(req.query.size)
-      console.log('query for size and page',page,size);
-    const result =await paidCoursesCollections.find(query).skip(size*page).limit(size).toArray()
-    res.send(result)
-   })
-//  paid courses collections length
-   app.get('/paid-course-length',verify,async(req,res)=>{
-    const email = req.query?.email
-    let query={}
-    if(email){
-      query={email: email}
-    }
-    const result =await paidCoursesCollections.find(query).toArray()
-    res.send(result)
-   })
-    // post on corse collection
-   app.post("/paid-course", async (req, res) => {
-    const data = req.body;
-    const queryId=req.query.id
-    const query = {_id:new ObjectId(queryId)}
-
-    const updateDocQuery={
-      $inc:{
-        Enrollment:1
+    // get assignment collection
+    app.get("/assignments", verify, async (req, res) => {
+      const id = req.query?.id;
+      let query = {};
+      if (id) {
+        query = { assignmentId: id };
       }
-     }
-     const assignmentResult = await coursesCollections.updateOne(query,updateDocQuery)
+      const page = parseInt(req.query.page);
+      const size = parseInt(req.query.size);
+      const result = await assignmentCollections
+        .find(query)
+        .skip(size * page)
+        .limit(size)
+        .toArray();
+      res.send(result);
+    });
+    // get assignment collection length
+    app.get("/assignments-length", verify, async (req, res) => {
+      const id = req.query?.id;
+      let query = {};
+      if (id) {
+        query = { assignmentId: id };
+      }
+      const result = await assignmentCollections.find(query).toArray();
+      res.send(result);
+    });
+
+    // post on assignment collection
+    app.post("/assignments", async (req, res) => {
+      const data = req.body;
+      // console.log(data);
+      const filter = { Assignment_Title: data?.Assignment_Title };
+      const usersData = await assignmentCollections.findOne(filter);
+      if (usersData) {
+        return res.send({
+          message: "assignment already exist",
+          insertedId: null,
+        });
+      } else {
+        const result = await assignmentCollections.insertOne(data);
+        res.send(result);
+      }
+    });
+    // update assignment
+    app.patch("/assignments/:id", async (req, res) => {
+      const id = req.params.id;
+      const queryId = req.query.id;
+      const query = { _id: new ObjectId(queryId) };
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "submitted",
+        },
+      };
+      const updateDocQuery = {
+        $inc: {
+          perDayAssignment: 1,
+        },
+      };
+      const assignmentResult = await coursesCollections.updateOne(
+        query,
+        updateDocQuery
+      );
+      const result = await assignmentCollections.updateOne(filter, updateDoc);
+      res.send({ result, assignmentResult });
+    });
+    // payments intent
+    app.post(`/create-payment-intent`, async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+
+      console.log("amount==>", amount);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+    //  paid courses collections
+    app.get("/paid-course", verify, async (req, res) => {
+      const email = req.query?.email;
+      let query = {};
+      if (email) {
+        query = { email: email };
+      }
+      const page = parseInt(req.query.page);
+      const size = parseInt(req.query.size);
+      console.log("query for size and page", page, size);
+      const result = await paidCoursesCollections
+        .find(query)
+        .skip(size * page)
+        .limit(size)
+        .toArray();
+      res.send(result);
+    });
+    //  paid courses collections length
+    app.get("/paid-course-length", verify, async (req, res) => {
+      const email = req.query?.email;
+      let query = {};
+      if (email) {
+        query = { email: email };
+      }
+      const result = await paidCoursesCollections.find(query).toArray();
+      res.send(result);
+    });
+    // post on corse collection
+    app.post("/paid-course", async (req, res) => {
+      const data = req.body;
+      const queryId = req.query.id;
+      const query = { _id: new ObjectId(queryId) };
+
+      const updateDocQuery = {
+        $inc: {
+          Enrollment: 1,
+        },
+      };
+      const assignmentResult = await coursesCollections.updateOne(
+        query,
+        updateDocQuery
+      );
       const result = await paidCoursesCollections.insertOne(data);
-      res.send({result,assignmentResult});
-    
-  });
+      res.send({ result, assignmentResult });
+    });
 
     // await client.db("admin").command({ ping: 1 });
     // console.log("Pinged your deployment. You successfully connected to MongoDB!");
