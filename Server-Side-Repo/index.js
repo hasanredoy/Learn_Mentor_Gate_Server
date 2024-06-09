@@ -11,7 +11,7 @@ const port = process.env.PORT || 5000;
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: ["http://localhost:5173",'https://learn-mentor-gate.firebaseapp.com','https://learn-mentor-gate.web.app'],
   })
 );
 app.use(cookieParser());
@@ -513,6 +513,12 @@ async function run() {
       }
       const result = await paidCoursesCollections.find(query).toArray();
       res.send(result);
+    });
+    // all paid courses collections length
+    app.get("/all-paid-course-length",  async (req, res) => {
+     
+      const result = await paidCoursesCollections.estimatedDocumentCount()
+      res.send({count:result});
     });
     // post on corse collection
     app.post("/paid-course", async (req, res) => {
