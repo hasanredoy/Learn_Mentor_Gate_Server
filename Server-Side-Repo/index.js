@@ -68,7 +68,7 @@ async function run() {
 const verifyAdmin =async (req,res,next)=>{
   const email = req?.decoded.email
   const query = { email: email}
-  console.log('decoded email===>',email);
+  // console.log('decoded email===>',email);
   const user = await usersCollections.findOne(query)
   const isAdmin = user?.role === 'admin'
   if(!isAdmin){
@@ -78,12 +78,12 @@ const verifyAdmin =async (req,res,next)=>{
 }
     const verify = (req,res,next)=>{
   
-      console.log('header-->',req.headers.authorization);
+      // console.log('header-->',req.headers.authorization);
       if(!req.headers.authorization){
         return res.status(401).send({message:'unauthorized'})
       }
       const token = req?.headers?.authorization.split(' ')[1]
-      console.log( "token is", token);
+      // console.log( "token is", token);
       jsonWebToken.verify(token, process.env.Access_Token,(err, decoded)=>{
         if(err){
           return res.status(401)
@@ -108,7 +108,7 @@ const verifyAdmin =async (req,res,next)=>{
     // get reviews by id
     app.get("/reviews/:id",verify,verifyAdmin, async (req, res) => {
       const id = req.params.id
-      console.log('review id' ,id);
+      // console.log('review id' ,id);
       const filter = {reviewId:id}
       const result = await reviewsCollections.find(filter).toArray();
       res.send(result);
@@ -122,6 +122,19 @@ const verifyAdmin =async (req,res,next)=>{
 
     // get courses for display in home screen and all classes page
     app.get("/courses", async (req, res) => {
+      const page = parseInt(req.query.page)
+      const size = parseInt(req.query.size)
+
+      const result = await coursesCollections
+        .find({ status: "approved" })
+        .skip(size*page).limit(size)
+        .sort({ Total_enrollment: -1 })
+        .toArray();
+      res.send(result);
+    });
+
+    // get courses for display in home length only
+    app.get("/courses-length", async (req, res) => {
       const result = await coursesCollections
         .find({ status: "approved" })
         .sort({ Total_enrollment: -1 })
@@ -130,13 +143,21 @@ const verifyAdmin =async (req,res,next)=>{
     });
     // get all courses for admin
     app.get("/allCourses",verify,verifyAdmin, async (req, res) => {
-      const result = await coursesCollections.find().toArray();
+      const page = parseInt(req.query.page)
+      const size = parseInt(req.query.size)
+      console.log({size,page});
+      const result = await coursesCollections.find().skip(size*page).limit(size).toArray();
       res.send(result);
+    });
+    // get all courses length
+    app.get("/allCourses-length", async (req, res) => {
+      const result = await coursesCollections.estimatedDocumentCount()
+      res.send({count:result});
     });
     // get all courses for teacher
     app.get("/teacher-classes",verify, async (req, res) => {
       const email = req?.query?.email;
-      console.log("email", email);
+      // console.log("email", email);
       const filter = { email: email };
       const result = await coursesCollections.find(filter).toArray();
       res.send(result);
@@ -148,7 +169,7 @@ const verifyAdmin =async (req,res,next)=>{
       const filter = { _id: new ObjectId(id) };
       // console.log(filter);
       const result = await coursesCollections.findOne(filter);
-      console.log(id);
+      // console.log(id);
       res.send(result);
     });
 
@@ -228,8 +249,15 @@ const verifyAdmin =async (req,res,next)=>{
     // users apis
     // get users
     app.get("/users",verify,verifyAdmin, async (req, res) => {
-      const result = await usersCollections.find().toArray();
+      const page = parseInt(req.query.page)
+      const size = parseInt(req.query.size)
+      const result = await usersCollections.find().skip(size*page).limit(size).toArray();
       res.send(result);
+    });
+    // get users length
+    app.get("/users-length", async (req, res) => {
+      const result = await usersCollections.estimatedDocumentCount()
+      res.send({result});
     });
     // get single user
     app.get("/user", async (req, res) => {
@@ -316,8 +344,15 @@ const verifyAdmin =async (req,res,next)=>{
 
     // get teacher collection
     app.get("/teachers",verify,verifyAdmin, async (req, res) => {
-      const result = await teachersCollections.find().toArray();
+      const page = parseInt(req.query.page)
+      const size = parseInt(req.query.size)
+      const result = await teachersCollections.find().skip(size*page).limit(size).toArray();
       res.send(result);
+    });
+    // get teacher collection
+    app.get("/teachers-length", async (req, res) => {
+      const result = await teachersCollections.estimatedDocumentCount();
+      res.send({result});
     });
     // update teacher status
     app.patch("/teacher/approve/:id", async (req, res) => {
@@ -414,6 +449,19 @@ app.post(`/create-payment-intent`,async (req,res)=>{
 
 //  paid courses collections 
    app.get('/paid-course',verify,async(req,res)=>{
+    const email = req.query?.email
+    let query={}
+    if(email){
+      query={email: email}
+    }
+    const page = parseInt(req.query.page)
+      const size = parseInt(req.query.size)
+      console.log('query for size and page',page,size);
+    const result =await paidCoursesCollections.find(query).skip(size*page).limit(size).toArray()
+    res.send(result)
+   })
+//  paid courses collections length
+   app.get('/paid-course-length',verify,async(req,res)=>{
     const email = req.query?.email
     let query={}
     if(email){
