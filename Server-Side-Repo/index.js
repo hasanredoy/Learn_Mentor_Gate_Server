@@ -11,7 +11,7 @@ const port = process.env.PORT || 5000;
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:5173",'https://learn-mentor-gate.firebaseapp.com','https://learn-mentor-gate.web.app'],
+    origin: ['https://learn-mentor-gate.firebaseapp.com','https://learn-mentor-gate.web.app'],
   })
 );
 app.use(cookieParser());
